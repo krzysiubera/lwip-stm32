@@ -260,7 +260,7 @@ static void tcp_echoserver_error(void *arg, err_t err)
 	}
 
 	/* turn on blue LED */
-	HAL_GPIO_WritePin(LD2_GPIO_Port, LD2_Pin, GPIO_PIN_SET);
+	HAL_GPIO_WritePin(BLUE_LED_GPIO_Port, BLUE_LED_Pin, GPIO_PIN_SET);
 }
 
 /**
