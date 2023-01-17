@@ -25,9 +25,7 @@
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
 #include <stdio.h>
-#include <string.h>
-#include "mqtt.h"
-#include "httpd.h"
+#include "mqtt_example.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -37,7 +35,7 @@
 
 /* Private define ------------------------------------------------------------*/
 /* USER CODE BEGIN PD */
-#define MQTT_PORT 1883
+
 /* USER CODE END PD */
 
 /* Private macro -------------------------------------------------------------*/
@@ -69,81 +67,6 @@ int _write(int file, char *ptr, int len)
 	return len;
 }
 
-void example_do_connect(mqtt_client_t *client);
-
-
-static void mqtt_sub_request_cb(void *arg, err_t result)
-{
-	printf("Subscribe result: %d\n", result);
-}
-
-
-
-static void mqtt_connection_cb(mqtt_client_t *client, void *arg, mqtt_connection_status_t status)
-{
-	if (status != MQTT_CONNECT_ACCEPTED)
-	{
-		printf("mqtt_connection_cb: Disconnected, reason: %d\n", status);
-		example_do_connect(client);
-	}
-	else
-	{
-		/* Subscribe to a topic named "subtopic" with QoS level 0, call mqtt_sub_request_cb with result */
-		err_t err = mqtt_subscribe(client, "subtopic", 0, mqtt_sub_request_cb, arg);
-		printf("mqtt_subscribe return: %d\n", err);
-	}
-
-}
-
-
-
-void example_do_connect(mqtt_client_t *client)
-{
-	  struct mqtt_connect_client_info_t ci;
-	  err_t err;
-
-	  /* Setup an empty client info structure */
-	  memset(&ci, 0, sizeof(ci));
-
-	  /* Minimal amount of information required is client identifier, so set it here */
-	  ci.client_id = "lwip_test";
-	  ci.client_user = NULL;
-	  ci.client_pass = NULL;
-	  ci.keep_alive = 60;
-
-	  /* Initiate client and connect to server, if this fails immediately an error code is returned
-		 otherwise mqtt_connection_cb will be called with connection result after attempting
-		 to establish a connection with the server.
-		 For now MQTT version 3.1.1 is always used */
-
-	  ip_addr_t mqtt_server_ip;
-	  ipaddr_aton("192.168.1.2", &mqtt_server_ip);
-	  err = mqtt_client_connect(client, &mqtt_server_ip, MQTT_PORT, mqtt_connection_cb, 0, &ci);
-
-	  /* For now just print the result code */
-	  printf("mqtt_connect return %d\n", err);
-}
-
-void mqtt_pub_request_cb(void* arg, err_t result)
-{
-	if (result != ERR_OK)
-	{
-		printf("Publish result: %d\n", result);
-	}
-}
-
-
-void example_publish(mqtt_client_t* client, void* arg)
-{
-	const char* pub_payload = "this is my payload from stm";
-	u8_t qos = 2;
-	u8_t retain = 0;
-	err_t err = mqtt_publish(client, "pub_topic", pub_payload, strlen(pub_payload), qos, retain,
-							mqtt_pub_request_cb, arg);
-
-	printf("mqtt_publish return: %d\n", err);
-
-}
 
 /* USER CODE END 0 */
 
@@ -184,9 +107,10 @@ int main(void)
 	  printf("Error! client is null\n");
 	  Error_Handler();
   }
-  char buf[100];
+
+
   example_do_connect(client);
-  example_publish(client, buf);
+  example_publish(client, NULL);
 
   /* USER CODE END 2 */
 
