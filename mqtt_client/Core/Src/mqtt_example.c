@@ -12,7 +12,9 @@
 /* callbacks */
 static void mqtt_connection_cb(mqtt_client_t *client, void *arg, mqtt_connection_status_t status);
 static void mqtt_sub_request_cb(void *arg, err_t result);
-void mqtt_pub_request_cb(void* arg, err_t result);
+static void mqtt_pub_request_cb(void* arg, err_t result);
+static void mqtt_incoming_publish_cb(void *arg, const char *topic, u32_t tot_len);
+static void mqtt_incoming_data_cb(void *arg, const u8_t *data, u16_t len, u8_t flags);
 
 
 /* Example on how to make MQTT connection to broker */
@@ -67,6 +69,9 @@ static void mqtt_connection_cb(mqtt_client_t *client, void *arg, mqtt_connection
 	}
 	else
 	{
+		/* Setup callback for incoming publish requests */
+		mqtt_set_inpub_callback(client, mqtt_incoming_publish_cb, mqtt_incoming_data_cb, arg);
+
 		/* Subscribe to a topic named "sub_topic" with QoS level 0, call mqtt_sub_request_cb with result */
 		err_t err = mqtt_subscribe(client, "sub_topic", 0, mqtt_sub_request_cb, arg);
 		printf("mqtt_subscribe return: %d\n", err);
@@ -80,10 +85,31 @@ static void mqtt_sub_request_cb(void *arg, err_t result)
 }
 
 /* Called when a publish request has completed */
-void mqtt_pub_request_cb(void* arg, err_t result)
+static void mqtt_pub_request_cb(void* arg, err_t result)
 {
 	if (result != ERR_OK)
 	{
 		printf("Publish result: %d\n", result);
+	}
+}
+
+/* Called when an incoming publish arrives to a subscribed topic */
+static void mqtt_incoming_publish_cb(void *arg, const char *topic, u32_t tot_len)
+{
+	printf("Incoming publish at topic %s with total length %u\n", topic, (unsigned int) tot_len);
+}
+
+/* Called when data arrives to a subscribed topic */
+static void mqtt_incoming_data_cb(void *arg, const u8_t *data, u16_t len, u8_t flags)
+{
+	printf("Incoming publish payload with length %d, flags %u\n", len, (unsigned int)flags);
+
+	if (flags & MQTT_DATA_FLAG_LAST)
+	{
+		printf("mqtt_incoming_data_cb: %s\n", (const char *)data);
+	}
+	else
+	{
+		printf("Ignoring fragmented payload...\n");
 	}
 }
